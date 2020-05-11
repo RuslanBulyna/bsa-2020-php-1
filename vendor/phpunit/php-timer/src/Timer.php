@@ -11,6 +11,9 @@ namespace SebastianBergmann\Timer;
 
 final class Timer
 {
+    /**
+     * @psalm-var array<string,int>
+     */
     private const SIZES = [
         'GB' => 1073741824,
         'MB' => 1048576,
@@ -18,18 +21,18 @@ final class Timer
     ];
 
     /**
-     * @var float[]
+     * @psalm-var list<float>
      */
     private static $startTimes = [];
 
     public static function start(): void
     {
-        self::$startTimes[] = \hrtime(true) / 1000000;
+        self::$startTimes[] = \hrtime(true) / 1000000000;
     }
 
     public static function stop(): float
     {
-        return (\hrtime(true) / 1000000) - \array_pop(self::$startTimes);
+        return (\hrtime(true) / 1000000000) - \array_pop(self::$startTimes);
     }
 
     public static function bytesToString(float $bytes): string
@@ -112,15 +115,19 @@ final class Timer
      */
     public static function timeSinceStartOfRequest(): string
     {
-        if (isset($_SERVER['REQUEST_TIME_FLOAT'])) {
-            $startOfRequest = $_SERVER['REQUEST_TIME_FLOAT'];
-        } elseif (isset($_SERVER['REQUEST_TIME'])) {
-            $startOfRequest = $_SERVER['REQUEST_TIME'];
-        } else {
-            throw new RuntimeException('Cannot determine time at which the request started');
+        if (!isset($_SERVER['REQUEST_TIME_FLOAT'])) {
+            throw new RuntimeException(
+                'Cannot determine time at which the request started because $_SERVER[\'REQUEST_TIME_FLOAT\'] is not available'
+            );
         }
 
-        return self::secondsToShortTimeString(\microtime(true) - $startOfRequest);
+        if (!\is_float($_SERVER['REQUEST_TIME_FLOAT'])) {
+            throw new RuntimeException(
+                'Cannot determine time at which the request started because $_SERVER[\'REQUEST_TIME_FLOAT\'] is not of type float'
+            );
+        }
+
+        return self::secondsToShortTimeString(\microtime(true) - $_SERVER['REQUEST_TIME_FLOAT']);
     }
 
     /**
@@ -142,22 +149,18 @@ final class Timer
     {
         $timeInMilliseconds    = \round($timeInSeconds * 1000);
         $hours                 = \floor($timeInMilliseconds / 60 / 60 / 1000);
-        $hoursAsInteger        = (int) $hours;
         $hoursInMilliseconds   = $hours * 60 * 60 * 1000;
         $minutes               = \floor($timeInMilliseconds / 60 / 1000) % 60;
-        $minutesAsInteger      = $minutes;
         $minutesInMilliseconds = $minutes * 60 * 1000;
         $seconds               = \floor(($timeInMilliseconds - $hoursInMilliseconds - $minutesInMilliseconds) / 1000);
-        $secondsAsInteger      = (int) $seconds;
         $secondsInMilliseconds = $seconds * 1000;
         $milliseconds          = $timeInMilliseconds - $hoursInMilliseconds - $minutesInMilliseconds - $secondsInMilliseconds;
-        $millisecondsAsInteger = (int) $milliseconds;
 
         return [
-            'hours'        => $hoursAsInteger,
-            'minutes'      => $minutesAsInteger,
-            'seconds'      => $secondsAsInteger,
-            'milliseconds' => $millisecondsAsInteger,
+            'hours'        => (int) $hours,
+            'minutes'      => $minutes,
+            'seconds'      => (int) $seconds,
+            'milliseconds' => (int) $milliseconds,
         ];
     }
 }

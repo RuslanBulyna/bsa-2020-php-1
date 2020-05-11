@@ -9,9 +9,12 @@
     }
   ],
   "require": {
-    "php": "^7.4"
+    "php": "^7.4",
+    "rackspace/php-opencloud": "dev-master"
   },
   "require-dev": {
+    "laravel/homestead": "^10.8",
+    "phpunit/phpunit": "^9.1"
   },
   "autoload": {
     "psr-4": {
