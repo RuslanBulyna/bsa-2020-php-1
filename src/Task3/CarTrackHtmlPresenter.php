@@ -11,6 +11,6 @@ class CarTrackHtmlPresenter
 {
     public function present(Track $track): string
     {
-        //@todo
+        
     }
 }
